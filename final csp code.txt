@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUY OR SELL WASTE!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #timer {
+            font-size: 20px;
+            margin-top: 20px;
+        }
+        #highestBidder, #bidHistory {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .remove-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .remove-btn:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Place Your Bid</h1>
+        <form id="bidForm">
+            <label for="item">Item Name:</label>
+            <input type="text" id="item" name="item" required>
+            <label for="bidder">Your Name:</label>
+            <input type="text" id="bidder" name="bidder" required>
+            <label for="bid">Bid Amount:</label>
+            <input type="number" id="bid" name="bid" required>
+            <button type="submit">Submit Bid</button>
+        </form>
+        <div id="timer">Time left: 60s</div>
+        <div id="highestBidder">Highest Bidder: None</div>
+    </div>
+
+    <div class="container">
+        <h2>Bid History</h2>
+        <ul id="bidHistory"></ul>
+    </div>
+
+    <script>
+        let timeLeft = 60;
+        const timerElement = document.getElementById('timer');
+        const highestBidderElement = document.getElementById('highestBidder');
+        const bidHistoryElement = document.getElementById('bidHistory');
+
+        let highestBid = localStorage.getItem('highestBid') ? parseFloat(localStorage.getItem('highestBid')) : 0;
+        let highestBidder = localStorage.getItem('highestBidder') || 'None';
+        let bidHistory = JSON.parse(localStorage.getItem('bidHistory')) || [];
+
+        highestBidderElement.textContent = `Highest Bidder: ${highestBidder} with ₹${highestBid}`;
+
+        function updateBidHistory() {
+            bidHistoryElement.innerHTML = "";
+            bidHistory.forEach((bid, index) => {
+                let li = document.createElement('li');
+                li.innerHTML = `Item: ${bid.item}, Bidder: ${bid.bidder}, Amount: ₹${bid.amount} 
+                    <button class="remove-btn" onclick="removeBid(${index})">Remove</button>`;
+                bidHistoryElement.appendChild(li);
+            });
+        }
+        updateBidHistory();
+
+        const timerInterval = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerElement.textContent = 'Bidding closed';
+                document.getElementById('bidForm').querySelector('button').disabled = true;
+            } else {
+                timerElement.textContent = `Time left: ${timeLeft}s`;
+                timeLeft--;
+            }
+        }, 1000);
+
+        document.getElementById('bidForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const item = document.getElementById('item').value;
+            const bidder = document.getElementById('bidder').value;
+            const bid = parseFloat(document.getElementById('bid').value);
+
+            if (bid > highestBid) {
+                highestBid = bid;
+                highestBidder = bidder;
+                localStorage.setItem('highestBid', highestBid);
+                localStorage.setItem('highestBidder', highestBidder);
+                highestBidderElement.textContent = `Highest Bidder: ${highestBidder} with ₹${highestBid}`;
+            }
+
+            bidHistory.push({ item, bidder, amount: bid });
+            localStorage.setItem('bidHistory', JSON.stringify(bidHistory));
+
+            updateBidHistory();
+
+            alert(`Bid submitted!\nItem: ${item}\nBidder: ${bidder}\nBid Amount: ₹${bid}`);
+        });
+
+        function removeBid(index) {
+            bidHistory.splice(index, 1);
+            localStorage.setItem('bidHistory', JSON.stringify(bidHistory));
+            updateBidHistory();
+        }
+    </script>
+</body>
+</html>
